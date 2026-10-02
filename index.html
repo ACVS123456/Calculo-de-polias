@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Calculadora Profissional de Polias e Transmissão</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box
+}
+
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:#0f172a;
+color:#fff;
+padding:15px;
+}
+
+.container{
+max-width:850px;
+margin:auto;
+background:#1e293b;
+padding:20px;
+border-radius:18px;
+box-shadow:0 0 20px #0006;
+}
+
+h1{
+text-align:center;
+color:#38bdf8;
+}
+
+.sub{
+text-align:center;
+color:#cbd5e1;
+margin:8px 0 18px;
+}
+
+.card{
+background:#334155;
+padding:15px;
+border-radius:14px;
+margin-bottom:15px;
+}
+
+label{
+display:block;
+margin-top:12px;
+font-weight:bold;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+font-size:18px;
+margin-top:5px;
+}
+
+button{
+width:100%;
+padding:14px;
+font-size:18px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+margin-top:18px;
+background:#0ea5e9;
+color:white;
+font-weight:bold;
+}
+
+button:hover{
+background:#0284c7;
+}
+
+/* =========================
+   ÁREA DA TRANSMISSÃO
+========================= */
+
+.transmissao{
+background:#0b1220;
+border-radius:14px;
+overflow:hidden;
+margin-top:15px;
+border:1px solid #475569;
+}
+
+#canvas{
+display:block;
+width:100%;
+height:430px;
+}
+
+.status{
+background:#111827;
+padding:12px;
+text-align:center;
+font-weight:bold;
+color:#4ade80;
+}
+
+.velocidade{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+padding:10px;
+background:#172033;
+}
+
+.vel{
+background:#263449;
+border-radius:10px;
+padding:10px;
+text-align:center;
+}
+
+.vel strong{
+display:block;
+font-size:22px;
+color:#38bdf8;
+margin-top:4px;
+}
+
+/* =========================
+   RESULTADO
+========================= */
+
+.result{
+margin-top:20px;
+padding:18px;
+border-radius:14px;
+background:#052e16;
+border:2px solid #22c55e;
+}
+
+.valor{
+font-size:36px;
+font-weight:bold;
+text-align:center;
+margin:10px 0;
+color:#4ade80;
+}
+
+.formula{
+font-size:28px;
+text-align:center;
+margin:12px 0;
+}
+
+small{
+color:#cbd5e1;
+}
+
+.info{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:10px;
+margin-top:15px;
+}
+
+.box{
+background:#1e293b;
+padding:12px;
+border-radius:10px;
+text-align:center;
+}
+
+.box b{
+font-size:18px;
+color:#38bdf8;
+}
+
+@media(max-width:600px){
+
+#canvas{
+height:360px;
+}
+
+.formula{
+font-size:22px;
+}
+
+}
+
+@media print{
+
+body{
+background:#fff;
+color:#000;
+}
+
+.container{
+box-shadow:none;
+background:white;
+}
+
+.card{
+background:#f1f5f9;
+}
+
+button{
+display:none;
+}
+
+.transmissao{
+display:none;
+}
+
+.result{
+background:#eef;
+}
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+<h1>⚙ Calculadora de Polias</h1>
+
+<div class="sub">
+Transmissão por correia sem escorregamento
+</div>
+
+
+<!-- =========================
+     ENTRADAS
+========================= -->
+
+<div class="card">
+
+<label>Calcular</label>
+
+<select id="tipo">
+
+<option value="n2">
+Rotação da conduzida (N2)
+</option>
+
+<option value="n1">
+Rotação da motora (N1)
+</option>
+
+<option value="d2">
+Diâmetro conduzida (D2)
+</option>
+
+<option value="d1">
+Diâmetro motora (D1)
+</option>
+
+</select>
+
+
+<label>
+Rotação motora N1 (rpm)
+</label>
+
+<input
+id="n1"
+type="number"
+value="1500"
+min="1"
+step="0.01"
+>
+
+
+<label>
+Rotação conduzida N2 (rpm)
+</label>
+
+<input
+id="n2"
+type="number"
+value="600"
+min="1"
+step="0.01"
+>
+
+
+<label>
+Diâmetro motora D1 (mm)
+</label>
+
+<input
+id="d1"
+type="number"
+value="80"
+min="1"
+step="0.01"
+>
+
+
+<label>
+Diâmetro conduzida D2 (mm)
+</label>
+
+<input
+id="d2"
+type="number"
+value="200"
+min="1"
+step="0.01"
+>
+
+
+<button onclick="calcular()">
+CALCULAR
+</button>
+
+</div>
+
+
+<!-- =========================
+     TRANSMISSÃO ANIMADA
+========================= -->
+
+<div class="card">
+
+<h2>⚙ Simulação em tempo real</h2>
+
+<div class="transmissao">
+
+<canvas id="canvas"></canvas>
+
+<div class="status" id="status">
+TRANSMISSÃO EM FUNCIONAMENTO
+</div>
+
+<div class="velocidade">
+
+<div class="vel">
+
+Polia Motora
+
+<strong id="velN1">
+1500 rpm
+</strong>
+
+</div>
+
+<div class="vel">
+
+Polia Conduzida
+
+<strong id="velN2">
+600 rpm
+</strong>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =========================
+     FÓRMULA
+========================= -->
+
+<div class="card">
+
+<b>Fórmula fundamental</b>
+
+<div class="formula">
+N₁ × D₁ = N₂ × D₂
+</div>
+
+<small>
+Sem escorregamento, a velocidade linear da correia é igual nos dois lados.
+</small>
+
+</div>
+
+
+<!-- =========================
+     RESULTADO
+========================= -->
+
+<div id="saida"
+class="result"
+style="display:none">
+
+<div id="titulo"></div>
+
+<div class="valor"
+id="valor">
+</div>
+
+<div id="passo"></div>
+
+
+<div class="info">
+
+<div class="box">
+
+Velocidade da correia
+
+<br>
+
+<b id="velCorreia">
+-
+</b>
+
+</div>
+
+
+<div class="box">
+
+Relação
+
+<br>
+
+<b id="relacao">
+-
+</b>
+
+</div>
+
+
+<div class="box">
+
+Diferença de rotação
+
+<br>
+
+<b id="dif">
+-
+</b>
+
+</div>
+
+
+<div class="box">
+
+Sentido
+
+<br>
+
+<b>Inverso</b>
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   ELEMENTOS
+===================================================== */
+
+const canvas =
+document.getElementById("canvas");
+
+const ctx =
+canvas.getContext("2d");
+
+
+const n1El =
+document.getElementById("n1");
+
+const n2El =
+document.getElementById("n2");
+
+const d1El =
+document.getElementById("d1");
+
+const d2El =
+document.getElementById("d2");
+
+
+/* =====================================================
+   DADOS DA SIMULAÇÃO
+===================================================== */
+
+let dados = {
+
+n1:1500,
+n2:600,
+d1:80,
+d2:200
+
+};
+
+
+/*
+   Fase da correia.
+
+   Esta variável representa a posição
+   da correia ao longo do seu percurso.
+*/
+
+let faseCorreia = 0;
+
+
+/*
+   Ângulos das polias.
+*/
+
+let angulo1 = 0;
+
+let angulo2 = 0;
+
+
+/* =====================================================
+   AJUSTAR CANVAS
+===================================================== */
+
+function ajustarCanvas(){
+
+const rect =
+canvas.getBoundingClientRect();
+
+const escala =
+window.devicePixelRatio || 1;
+
+canvas.width =
+rect.width * escala;
+
+canvas.height =
+rect.height * escala;
+
+ctx.setTransform(
+escala,
+0,
+0,
+escala,
+0,
+0
+);
+
+}
+
+window.addEventListener(
+"resize",
+ajustarCanvas
+);
+
+ajustarCanvas();
+
+
+/* =====================================================
+   GEOMETRIA DAS POLIAS
+===================================================== */
+
+function geometria(){
+
+const W =
+canvas.clientWidth;
+
+const H =
+canvas.clientHeight;
+
+
+/*
+   Os raios são proporcionais
+   aos diâmetros reais.
+
+   Isso é importante para a visualização.
+*/
+
+const fator =
+Math.min(
+(W * 0.30) / (dados.d1 + dados.d2),
+(H * 0.28) / Math.max(dados.d1,dados.d2)
+);
+
+
+let r1 =
+dados.d1 * fator;
+
+let r2 =
+dados.d2 * fator;
+
+
+/*
+   Tamanho mínimo visual.
+*/
+
+const minimo = 35;
+
+if(r1 < minimo){
+
+const escala =
+minimo / r1;
+
+r1 *= escala;
+r2 *= escala;
+
+}
+
+
+/*
+   Centros.
+
+   As polias são posicionadas de modo
+   que a correia possa contorná-las.
+*/
+
+const distancia =
+r1 + r2 + Math.max(
+80,
+W * 0.16
+);
+
+
+const cx1 =
+W/2 - distancia/2;
+
+const cx2 =
+W/2 + distancia/2;
+
+const cy =
+H/2;
+
+return {
+
+cx1,
+cx2,
+cy,
+r1,
+r2
+
+};
+
+}
+
+
+/* =====================================================
+   DESENHAR POLIA
+===================================================== */
+
+function desenharPolia(
+cx,
+cy,
+r,
+angulo,
+cor,
+nome,
+diametro
+){
+
+ctx.save();
+
+ctx.translate(cx,cy);
+
+
+/*
+   Rotação real da polia.
+*/
+
+ctx.rotate(angulo);
+
+
+/*
+   Sombra.
+*/
+
+ctx.beginPath();
+
+ctx.arc(
+0,
+4,
+r,
+0,
+Math.PI*2
+);
+
+ctx.fillStyle =
+"rgba(0,0,0,.35)";
+
+ctx.fill();
+
+
+/*
+   Corpo da polia.
+*/
+
+ctx.beginPath();
+
+ctx.arc(
+0,
+0,
+r,
+0,
+Math.PI*2
+);
+
+ctx.fillStyle =
+cor;
+
+ctx.fill();
+
+ctx.strokeStyle =
+"#cbd5e1";
+
+ctx.lineWidth = 3;
+
+ctx.stroke();
+
+
+/*
+   Canal da correia.
+*/
+
+ctx.beginPath();
+
+ctx.arc(
+0,
+0,
+r*0.82,
+0,
+Math.PI*2
+);
+
+ctx.strokeStyle =
+"#0f172a";
+
+ctx.lineWidth =
+Math.max(5,r*0.10);
+
+ctx.stroke();
+
+
+/*
+   Cubo central.
+*/
+
+ctx.beginPath();
+
+ctx.arc(
+0,
+0,
+r*0.22,
+0,
+Math.PI*2
+);
+
+ctx.fillStyle =
+"#64748b";
+
+ctx.fill();
+
+ctx.strokeStyle =
+"#e2e8f0";
+
+ctx.lineWidth = 2;
+
+ctx.stroke();
+
+
+/*
+   Raios.
+
+   Eles permitem enxergar a rotação.
+*/
+
+for(let i=0;i<8;i++){
+
+const a =
+i*Math.PI/4;
+
+ctx.beginPath();
+
+ctx.moveTo(
+Math.cos(a)*r*0.22,
+Math.sin(a)*r*0.22
+);
+
+ctx.lineTo(
+Math.cos(a)*r*0.78,
+Math.sin(a)*r*0.78
+);
+
+ctx.strokeStyle =
+"#e2e8f0";
+
+ctx.lineWidth = 4;
+
+ctx.stroke();
+
+}
+
+
+ctx.restore();
+
+
+/*
+   Nome da polia.
+*/
+
+ctx.fillStyle =
+"#fff";
+
+ctx.font =
+"bold 15px Arial";
+
+ctx.textAlign =
+"center";
+
+ctx.fillText(
+nome,
+cx,
+cy+r+28
+);
+
+
+ctx.font =
+"13px Arial";
+
+ctx.fillStyle =
+"#cbd5e1";
+
+ctx.fillText(
+"D = "+diametro.toFixed(2)+" mm",
+cx,
+cy+r+47
+);
+
+}
+
+
+/* =====================================================
+   DESENHAR CORREIA
+===================================================== */
+
+function desenharCorreia(
+cx1,
+cx2,
+cy,
+r1,
+r2
+){
+
+/*
+   A correia é representada por dois trechos
+   retos + dois arcos.
+
+   Para uma correia aberta:
+   - trecho superior vai da polia menor para a maior
+   - trecho inferior volta
+*/
+
+
+const distancia =
+cx2-cx1;
+
+
+/*
+   Ângulo aproximado da linha tangente
+   entre polias de diâmetros diferentes.
+*/
+
+const diferenca =
+r2-r1;
+
+
+/*
+   Proteção contra valores inválidos.
+*/
+
+let alfa =
+Math.asin(
+Math.max(
+-0.95,
+Math.min(
+0.95,
+diferenca/distancia
+)
+)
+);
+
+
+/*
+   Pontos tangentes.
+*/
+
+const x1Top =
+cx1 + r1*Math.sin(alfa);
+
+const y1Top =
+cy - r1*Math.cos(alfa);
+
+const x2Top =
+cx2 + r2*Math.sin(alfa);
+
+const y2Top =
+cy - r2*Math.cos(alfa);
+
+
+const x1Bottom =
+cx1 - r1*Math.sin(alfa);
+
+const y1Bottom =
+cy + r1*Math.cos(alfa);
+
+const x2Bottom =
+cx2 - r2*Math.sin(alfa);
+
+const y2Bottom =
+cy + r2*Math.cos(alfa);
+
+
+/*
+   Corpo da correia.
+*/
+
+ctx.beginPath();
+
+
+/*
+   Trecho superior.
+*/
+
+ctx.moveTo(
+x1Top,
+y1Top
+);
+
+ctx.lineTo(
+x2Top,
+y2Top
+);
+
+
+/*
+   Arco da polia maior.
+*/
+
+const angTop2 =
+Math.atan2(
+y2Top-cy,
+x2Top-cx2
+);
+
+const angBottom2 =
+Math.atan2(
+y2Bottom-cy,
+x2Bottom-cx2
+);
+
+ctx.arc(
+cx2,
+cy,
+r2,
+angTop2,
+angBottom2,
+false
+);
+
+
+/*
+   Trecho inferior.
+*/
+
+ctx.lineTo(
+x1Bottom,
+y1Bottom
+);
+
+
+/*
+   Arco da polia menor.
+*/
+
+const angBottom1 =
+Math.atan2(
+y1Bottom-cy,
+x1Bottom-cx1
+);
+
+const angTop1 =
+Math.atan2(
+y1Top-cy,
+x1Top-cx1
+);
+
+ctx.arc(
+cx1,
+cy,
+r1,
+angBottom1,
+angTop1,
+false
+);
+
+
+ctx.closePath();
+
+
+/*
+   Correia externa.
+*/
+
+ctx.strokeStyle =
+"#111827";
+
+ctx.lineWidth = 18;
+
+ctx.lineJoin =
+"round";
+
+ctx.lineCap =
+"round";
+
+ctx.stroke();
+
+
+/*
+   Faixa interna para deixar
+   o movimento visível.
+*/
+
+ctx.strokeStyle =
+"#475569";
+
+ctx.lineWidth = 11;
+
+ctx.stroke();
+
+
+/*
+   Linha móvel sobre a correia.
+
+   O padrão tracejado representa
+   a velocidade linear da correia.
+*/
+
+ctx.save();
+
+ctx.setLineDash([14,12]);
+
+ctx.lineDashOffset =
+-faseCorreia;
+
+ctx.strokeStyle =
+"#38bdf8";
+
+ctx.lineWidth = 4;
+
+ctx.stroke();
+
+ctx.restore();
+
+
+/*
+   Setas indicando o sentido do movimento.
+*/
+
+desenharSetasCorreia(
+cx1,
+cx2,
+cy,
+r1,
+r2,
+alfa
+);
+
+}
+
+
+/* =====================================================
+   SETAS DA CORREIA
+===================================================== */
+
+function desenharSetasCorreia(
+cx1,
+cx2,
+cy,
+r1,
+r2,
+alfa
+){
+
+/*
+   Setas no trecho superior.
+*/
+
+const x =
+(cx1+cx2)/2;
+
+const y =
+cy -
+(r1+r2)/2 *
+Math.cos(alfa);
+
+
+desenharSeta(
+x,
+y,
+0
+);
+
+
+/*
+   Seta no trecho inferior.
+
+   Sentido contrário.
+*/
+
+const y2 =
+cy +
+(r1+r2)/2 *
+Math.cos(alfa);
+
+
+desenharSeta(
+x,
+y2,
+Math.PI
+);
+
+}
+
+
+function desenharSeta(x,y,angulo){
+
+ctx.save();
+
+ctx.translate(x,y);
+
+ctx.rotate(angulo);
+
+ctx.beginPath();
+
+ctx.moveTo(
+10,
+0
+);
+
+ctx.lineTo(
+-8,
+-8
+);
+
+ctx.lineTo(
+-8,
+8
+);
+
+ctx.closePath();
+
+ctx.fillStyle =
+"#facc15";
+
+ctx.fill();
+
+ctx.restore();
+
+}
+
+
+/* =====================================================
+   DESENHAR TRANSMISSÃO
+===================================================== */
+
+function desenhar(){
+
+const W =
+canvas.clientWidth;
+
+const H =
+canvas.clientHeight;
+
+ctx.clearRect(
+0,
+0,
+W,
+H
+);
+
+
+const g =
+geometria();
+
+
+/*
+   Primeiro desenha a correia,
+   depois as polias por cima.
+*/
+
+desenharCorreia(
+g.cx1,
+g.cx2,
+g.cy,
+g.r1,
+g.r2
+);
+
+
+desenharPolia(
+g.cx1,
+g.cy,
+g.r1,
+angulo1,
+"#0ea5e9",
+"POLIA MOTORA",
+dados.d1
+);
+
+
+desenharPolia(
+g.cx2,
+g.cy,
+g.r2,
+angulo2,
+"#22c55e",
+"POLIA CONDUZIDA",
+dados.d2
+);
+
+
+/*
+   Informação da velocidade linear.
+*/
+
+const velocidadeLinear =
+Math.PI *
+(dados.d1/1000) *
+dados.n1 /
+60;
+
+
+ctx.fillStyle =
+"#f8fafc";
+
+ctx.font =
+"bold 14px Arial";
+
+ctx.textAlign =
+"center";
+
+ctx.fillText(
+"Velocidade linear da correia: "+
+velocidadeLinear.toFixed(3)+
+" m/s",
+W/2,
+25
+);
+
+}
+
+
+/* =====================================================
+   ANIMAÇÃO FISICAMENTE CONSISTENTE
+===================================================== */
+
+let ultimoTempo =
+performance.now();
+
+
+function animar(tempo){
+
+/*
+   Delta time em segundos.
+*/
+
+const dt =
+Math.min(
+(tempo-ultimoTempo)/1000,
+0.05
+);
+
+ultimoTempo =
+tempo;
+
+
+/*
+   Velocidade angular:
+
+   ω = 2π × rpm / 60
+*/
+
+const omega1 =
+2*Math.PI*dados.n1/60;
+
+const omega2 =
+2*Math.PI*dados.n2/60;
+
+
+/*
+   Rotação das polias.
+
+   A polia conduzida gira no sentido contrário
+   em uma transmissão aberta? NÃO.
+
+   Em correia aberta, as duas polias giram
+   no mesmo sentido.
+
+   Portanto:
+   ângulo2 = ângulo2 + ω2 × dt
+*/
+
+angulo1 +=
+omega1*dt;
+
+angulo2 +=
+omega2*dt;
+
+
+/*
+   Movimento da correia.
+
+   Velocidade linear:
+
+   v = π × D × N / 60
+
+   Aqui usamos o diâmetro da motora.
+
+   O valor de fase é em pixels,
+   por isso fazemos uma escala visual.
+*/
+
+const velocidadeCorreia =
+Math.PI*
+(dados.d1/1000)*
+dados.n1/60;
+
+
+/*
+   Escala visual da correia.
+
+   A escala não altera o cálculo físico;
+   apenas torna o movimento visível na tela.
+*/
+
+faseCorreia +=
+velocidadeCorreia *
+dt *
+120;
+
+
+/*
+   Mantém a fase limitada.
+*/
+
+if(faseCorreia>100000){
+
+faseCorreia=0;
+
+}
+
+
+desenhar();
+
+
+requestAnimationFrame(animar);
+
+}
+
+
+/* =====================================================
+   CÁLCULO
+===================================================== */
+
+function calcular(){
+
+const tipo =
+document.getElementById("tipo").value;
+
+
+let n1 =
+parseFloat(n1El.value);
+
+let n2 =
+parseFloat(n2El.value);
+
+let d1 =
+parseFloat(d1El.value);
+
+let d2 =
+parseFloat(d2El.value);
+
+
+let r;
+
+let titulo="";
+
+let passo="";
+
+
+switch(tipo){
+
+case "n2":
+
+if(!n1 || !d1 || !d2){
+
+alert(
+"Preencha N1, D1 e D2."
+);
+
+return;
+
+}
+
+r =
+n1*d1/d2;
+
+n2 =
+r;
+
+titulo =
+"Rotação da Polia Conduzida";
+
+passo =
+`N₂=(N₁×D₁)/D₂<br>
+${n1}×${d1}/${d2}<br>
+<b>N₂=${r.toFixed(2)} rpm</b>`;
+
+break;
+
+
+case "n1":
+
+if(!n2 || !d1 || !d2){
+
+alert(
+"Preencha N2, D1 e D2."
+);
+
+return;
+
+}
+
+r =
+n2*d2/d1;
+
+n1 =
+r;
+
+titulo =
+"Rotação da Polia Motora";
+
+passo =
+`N₁=(N₂×D₂)/D₁<br>
+${n2}×${d2}/${d1}<br>
+<b>N₁=${r.toFixed(2)} rpm</b>`;
+
+break;
+
+
+case "d2":
+
+if(!n1 || !n2 || !d1){
+
+alert(
+"Preencha N1, N2 e D1."
+);
+
+return;
+
+}
+
+r =
+n1*d1/n2;
+
+d2 =
+r;
+
+titulo =
+"Diâmetro da Polia Conduzida";
+
+passo =
+`D₂=(N₁×D₁)/N₂<br>
+${n1}×${d1}/${n2}<br>
+<b>D₂=${r.toFixed(2)} mm</b>`;
+
+break;
+
+
+case "d1":
+
+if(!n1 || !n2 || !d2){
+
+alert(
+"Preencha N1, N2 e D2."
+);
+
+return;
+
+}
+
+r =
+n2*d2/n1;
+
+d1 =
+r;
+
+titulo =
+"Diâmetro da Polia Motora";
+
+passo =
+`D₁=(N₂×D₂)/N₁<br>
+${n2}×${d2}/${n1}<br>
+<b>D₁=${r.toFixed(2)} mm</b>`;
+
+break;
+
+}
+
+
+/*
+   Atualiza os dados reais da animação.
+*/
+
+dados.n1 =
+n1;
+
+dados.n2 =
+n2;
+
+dados.d1 =
+d1;
+
+dados.d2 =
+d2;
+
+
+/*
+   Resultado.
+*/
+
+document.getElementById(
+"saida"
+).style.display="block";
+
+
+document.getElementById(
+"titulo"
+).innerHTML =
+"<h2>"+titulo+"</h2>";
+
+
+document.getElementById(
+"valor"
+).innerHTML =
+r.toFixed(2)+
+(
+tipo=="d1" ||
+tipo=="d2"
+?
+" mm"
+:
+" rpm"
+);
+
+
+document.getElementById(
+"passo"
+).innerHTML =
+passo;
+
+
+/*
+   Relação de transmissão.
+*/
+
+const relacao =
+d2/d1;
+
+
+document.getElementById(
+"relacao"
+).innerHTML =
+relacao.toFixed(3)+":1";
+
+
+/*
+   Velocidade linear da correia.
+
+   v = πDN/60
+
+   D em metros.
+*/
+
+const velocidade =
+Math.PI*
+(d1/1000)*
+n1/60;
+
+
+document.getElementById(
+"velCorreia"
+).innerHTML =
+velocidade.toFixed(3)+
+" m/s";
+
+
+/*
+   Diferença de rotação.
+*/
+
+document.getElementById(
+"dif"
+).innerHTML =
+Math.abs(n1-n2).toFixed(2)+
+" rpm";
+
+
+/*
+   Atualiza os campos calculados.
+
+   Isso permite continuar trabalhando
+   com os valores obtidos.
+*/
+
+if(tipo=="n2"){
+
+n2El.value =
+n2.toFixed(2);
+
+}
+
+if(tipo=="n1"){
+
+n1El.value =
+n1.toFixed(2);
+
+}
+
+if(tipo=="d2"){
+
+d2El.value =
+d2.toFixed(2);
+
+}
+
+if(tipo=="d1"){
+
+d1El.value =
+d1.toFixed(2);
+
+}
+
+}
+
+
+/* =====================================================
+   ATUALIZAÇÃO EM TEMPO REAL
+===================================================== */
+
+function atualizarTempoReal(){
+
+const n1 =
+parseFloat(n1El.value);
+
+const n2Campo =
+parseFloat(n2El.value);
+
+const d1 =
+parseFloat(d1El.value);
+
+const d2 =
+parseFloat(d2El.value);
+
+
+/*
+   Para a animação, precisamos de
+   quatro valores válidos.
+
+   Quando o usuário está digitando,
+   não interrompemos a animação.
+*/
+
+if(
+!Number.isFinite(n1) ||
+!Number.isFinite(d1) ||
+!Number.isFinite(d2)
+){
+
+return;
+
+}
+
+
+/*
+   N2 sempre pode ser calculado
+   a partir de N1, D1 e D2.
+*/
+
+const n2 =
+n1*d1/d2;
+
+
+/*
+   Atualiza o modelo.
+*/
+
+dados.n1 =
+n1;
+
+dados.n2 =
+n2;
+
+dados.d1 =
+d1;
+
+dados.d2 =
+d2;
+
+
+/*
+   Atualiza N2 somente se o campo
+   não estiver sendo usado como
+   entrada principal.
+
+   Isso mantém a animação coerente
+   com a relação.
+*/
+
+if(
+document.getElementById("tipo").value === "n2"
+){
+
+n2El.value =
+n2.toFixed(2);
+
+}
+
+
+/*
+   Velocidade da correia.
+*/
+
+const v =
+Math.PI*
+(d1/1000)*
+n1/60;
+
+
+document.getElementById(
+"velN1"
+).innerHTML =
+n1.toFixed(2)+
+" rpm";
+
+
+document.getElementById(
+"velN2"
+).innerHTML =
+n2.toFixed(2)+
+" rpm";
+
+
+document.getElementById(
+"velCorreia"
+).innerHTML =
+v.toFixed(3)+
+" m/s";
+
+
+document.getElementById(
+"relacao"
+).innerHTML =
+(d2/d1).toFixed(3)+":1";
+
+
+document.getElementById(
+"dif"
+).innerHTML =
+Math.abs(n1-n2).toFixed(2)+
+" rpm";
+
+
+document.getElementById(
+"saida"
+).style.display =
+"block";
+
+
+document.getElementById(
+"valor"
+).innerHTML =
+n2.toFixed(2)+" rpm";
+
+
+document.getElementById(
+"titulo"
+).innerHTML =
+"<h2>Rotação da Polia Conduzida</h2>";
+
+
+document.getElementById(
+"passo"
+).innerHTML =
+`N₂=(N₁×D₁)/D₂<br>
+${n1}×${d1}/${d2}<br>
+<b>N₂=${n2.toFixed(2)} rpm</b>`;
+
+
+document.getElementById(
+"status"
+).innerHTML =
+"● TRANSMISSÃO EM FUNCIONAMENTO — SEM ESCORREGAMENTO";
+
+}
+
+
+/* =====================================================
+   EVENTOS
+===================================================== */
+
+n1El.addEventListener(
+"input",
+atualizarTempoReal
+);
+
+n2El.addEventListener(
+"input",
+atualizarTempoReal
+);
+
+d1El.addEventListener(
+"input",
+atualizarTempoReal
+);
+
+d2El.addEventListener(
+"input",
+atualizarTempoReal
+);
+
+
+/*
+   Quando muda o tipo de cálculo,
+   executa novamente.
+*/
+
+document.getElementById(
+"tipo"
+).addEventListener(
+"change",
+()=>{
+    calcular();
+    atualizarTempoReal();
+}
+);
+
+
+/* =====================================================
+   INICIALIZAÇÃO
+===================================================== */
+
+calcular();
+
+atualizarTempoReal();
+
+requestAnimationFrame(animar);
+
+</script>
+
+</body>
+</html>
